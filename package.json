@@ -1,0 +1,20 @@
+{
+  "name": "cdn-assets-switch",
+  "version": "1.0.0",
+  "description": "switch all assets cdn name (script,link,background-image,img). when you open one website in a test domain you can switch cdn name to location.hostname",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "cdn",
+    "name",
+    "switch",
+    "cdn",
+    "switch",
+    "test",
+    "domain"
+  ],
+  "author": "wilsonliuxyz@gmail.com",
+  "license": "MIT"
+}
