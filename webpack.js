@@ -4,11 +4,11 @@ module.exports = {
     entry: './index.js',
     output: {
         path: path.resolve(__dirname, 'dist'),
-        filename: 'CdnAssetsSwitch.js',
+        filename: 'CdnAssetsSwitch.[contenthash].js',
         library: 'CdnAssetsSwitch',
         libraryTarget: 'umd'
     },
     optimization: {
-        minimize: false,
+        minimize: true,
     }
 };

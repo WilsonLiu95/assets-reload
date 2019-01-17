@@ -196,4 +196,4 @@ function hackWebpack(webpackModuelId) {
     ];
     (window["webpackJsonp"] = window["webpackJsonp"] || []).push([chunkIds, moreModules, executeModules]);
 }
-export default CdnAssetsSwitch
+module.exports = CdnAssetsSwitch
