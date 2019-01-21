@@ -20,20 +20,51 @@ I Recommend inline `index.js` to head. ！！！Only use in test environment.
 推荐内联 index.js 到 head.注意！！！只建议在测试域名使用。
 
 ```javascript
-// in test domain exec
-if (is_in_test_domain && window.CdnAssetsSwitch) {
-  var CdnAssetsSwitchObj = new CdnAssetsSwitch(function(url, type, sourceEl) {
-    if (url && url.indexOf("static.baidu.com")) {
-      return url.replace("static.baidu.com", location.hostname);
+try{
+    var isInTestDomain = location.hostname.indexOf('cdn.qq.com') > 0;
+    window.attackCatch = function(htmlNode){
+        if(isInTestDomain){
+            CdnAssetsSwitchObj.reset();
+        }else{
+            if(htmlNode.nodeName == 'SCRIPT'){
+                CdnAssetsSwitchObj.replaceOneScript(htmlNode);
+            }else if(htmlNode.nodeName == 'LINK'){
+                CdnAssetsSwitchObj.replaceOneLink(htmlNode);
+            }
+        }
     }
-  });
-  // hack webpack to modify publicUrl this can be exec immediately. this must exec before async load like import()  or require.ensure
-  CdnAssetsSwitchObj.hackWebpack();
+    var CdnAssetsSwitchObj = new window.CdnAssetsSwitch(function(url, type, sourceEl) {
+        // 非cdn资源不重试
+        var isCdn = url && url.indexOf("cdn.qq.com")
+        if(!isCdn){return false;}
+        
+        var reloadTimes = 0;
+        var urlSearch = url.split('?')[1];
 
-  // replace when all assets load
-  document.addEventListener("load", function() {
-    CdnAssetsSwitchObj.reset();
-  });
+        // 查看重试了几次
+        if(urlSearch){
+            var matchRes = urlSearch.match(/reloadAssets=(\d+)&?/);
+            if(matchRes && matchRes.length>1){
+                reloadTimes = Number(matchRes[1]);
+            }
+        }
+        // 第一次重试cdn域名资源
+        if(reloadTimes == 0){
+            return url + (urlSearch ? '&':'?') + 'reloadAssets=1';
+        }else if(reloadTimes == 1){
+            // 第二次则重试主站资源
+            var replaceUrl = url.replace('cdn.qq.com', location.hostname);
+            return replaceUrl.replace('reloadAssets='+reloadTimes, 'reloadAssets='+(1+reloadTimes));
+        }
+    });
+    // hack webpack to modify publicUrl this can be exec immediately. this must exec before async load like import()  or require.ensure
+    if(isInTestDomain){
+        CdnAssetsSwitchObj.hackWebpack();
+        CdnAssetsSwitchObj.reset();
+    }
+
+}catch(err){
+    console.error(err);
 }
 ```
 
