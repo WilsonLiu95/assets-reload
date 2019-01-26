@@ -20,7 +20,6 @@ CdnAssetsSwitch.prototype = {
   replaceOneLink,
   replaceBackGroundImage,
   relaceImgSrc,
-  replaceWebpackPublicUrl,
   hackWebpack
 }
 /**
