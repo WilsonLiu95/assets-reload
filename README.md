@@ -20,51 +20,59 @@ I Recommend inline `index.js` to head. ！！！Only use in test environment.
 推荐内联 index.js 到 head.注意！！！只建议在测试域名使用。
 
 ```javascript
-try{
-    var isInTestDomain = location.hostname.indexOf('cdn.qq.com') > 0;
-    window.attackCatch = function(htmlNode){
-        if(isInTestDomain){
-            CdnAssetsSwitchObj.reset();
-        }else{
-            if(htmlNode.nodeName == 'SCRIPT'){
-                CdnAssetsSwitchObj.replaceOneScript(htmlNode);
-            }else if(htmlNode.nodeName == 'LINK'){
-                CdnAssetsSwitchObj.replaceOneLink(htmlNode);
-            }
-        }
+try {
+  var isInTestDomain = location.hostname.indexOf("cdn.qq.com") > 0;
+  window.attackCatch = function(htmlNode) {
+    if (isInTestDomain) {
+      CdnAssetsSwitchObj.reset();
+    } else {
+      if (htmlNode.nodeName == "SCRIPT") {
+        CdnAssetsSwitchObj.replaceOneScript(htmlNode);
+      } else if (htmlNode.nodeName == "LINK") {
+        CdnAssetsSwitchObj.replaceOneLink(htmlNode);
+      }
     }
-    var CdnAssetsSwitchObj = new window.CdnAssetsSwitch(function(url, type, sourceEl) {
-        // 非cdn资源不重试
-        var isCdn = url && url.indexOf("cdn.qq.com")
-        if(!isCdn){return false;}
-        
-        var reloadTimes = 0;
-        var urlSearch = url.split('?')[1];
-
-        // 查看重试了几次
-        if(urlSearch){
-            var matchRes = urlSearch.match(/reloadAssets=(\d+)&?/);
-            if(matchRes && matchRes.length>1){
-                reloadTimes = Number(matchRes[1]);
-            }
-        }
-        // 第一次重试cdn域名资源
-        if(reloadTimes == 0){
-            return url + (urlSearch ? '&':'?') + 'reloadAssets=1';
-        }else if(reloadTimes == 1){
-            // 第二次则重试主站资源
-            var replaceUrl = url.replace('cdn.qq.com', location.hostname);
-            return replaceUrl.replace('reloadAssets='+reloadTimes, 'reloadAssets='+(1+reloadTimes));
-        }
-    });
-    // hack webpack to modify publicUrl this can be exec immediately. this must exec before async load like import()  or require.ensure
-    if(isInTestDomain){
-        CdnAssetsSwitchObj.hackWebpack();
-        CdnAssetsSwitchObj.reset();
+  };
+  var CdnAssetsSwitchObj = new window.CdnAssetsSwitch(function(
+    url,
+    type,
+    sourceEl
+  ) {
+    // 非cdn资源不重试
+    var isCdn = url && url.indexOf("cdn.qq.com");
+    if (!isCdn) {
+      return false;
     }
 
-}catch(err){
-    console.error(err);
+    var reloadTimes = 0;
+    var urlSearch = url.split("?")[1];
+
+    // 查看重试了几次
+    if (urlSearch) {
+      var matchRes = urlSearch.match(/reloadAssets=(\d+)&?/);
+      if (matchRes && matchRes.length > 1) {
+        reloadTimes = Number(matchRes[1]);
+      }
+    }
+    // 第一次重试cdn域名资源
+    if (reloadTimes == 0) {
+      return url + (urlSearch ? "&" : "?") + "reloadAssets=1";
+    } else if (reloadTimes == 1) {
+      // 第二次则重试主站资源
+      var replaceUrl = url.replace("cdn.qq.com", location.hostname);
+      return replaceUrl.replace(
+        "reloadAssets=" + reloadTimes,
+        "reloadAssets=" + (1 + reloadTimes)
+      );
+    }
+  });
+  // hack webpack to modify publicUrl this can be exec immediately. this must exec before async load like import()  or require.ensure
+  if (isInTestDomain) {
+    CdnAssetsSwitchObj.hackWebpack();
+    CdnAssetsSwitchObj.reset();
+  }
+} catch (err) {
+  console.error(err);
 }
 ```
 
@@ -75,9 +83,9 @@ all function
 ```javascript
 
 /**
- * @desc replaceFunc 
+ * @desc replaceFunc
     1. return null undefined '' will not replace
-    2. return new url string 
+    2. return new url string
  *  @param url current url
     @param type replaceType script,image,backgroundImage,link,webpack
     @param sourceEl htmlNode or styleSheets.rules or __webpack_require__
@@ -97,7 +105,7 @@ CdnAssetsSwitch.prototype = {
     replaceBackGroundImage,
     relaceImgSrc,
     // hack webpack PublicUrl
-    replaceWebpackPublicUrl, // plan one 
+    replaceWebpackPublicUrl, // plan one
     hackWebpack // plan two
 }
 ```
