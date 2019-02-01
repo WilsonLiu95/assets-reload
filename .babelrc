@@ -1,4 +1,14 @@
 {
-  "presets": ["env"],
+  "presets": [
+    ["@babel/preset-env", {
+      "useBuiltIns": "usage",
+      "targets": [
+        "> 0.5%",
+        "last 2 versions",
+        "not ie <= 8"
+      ],
+      // "include":[]
+    }]
+  ],
   "plugins": ["syntax-dynamic-import"]
 }

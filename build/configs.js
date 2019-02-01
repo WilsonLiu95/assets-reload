@@ -1,7 +1,7 @@
 const path = require('path')
-const camelize = require('camelize')
 
 const buble = require('rollup-plugin-buble')
+const babel = require('rollup-plugin-babel')
 const cjs = require('rollup-plugin-commonjs')
 const node = require('rollup-plugin-node-resolve')
 const replace = require('rollup-plugin-replace')
@@ -47,6 +47,13 @@ module.exports = [
 ].map(genConfig)
 
 function genConfig (opts) {
+  const fmtModName = (name)=>{
+    return name.replace(/-(\w)/g, function(all, letter){
+      return letter.toUpperCase();
+    }).replace(/^(\w)/g, function(all ,letter){
+      return letter.toUpperCase();
+    })
+  }
   const config = {
     input: {
       input: resolve('src/index.js'),
@@ -57,13 +64,14 @@ function genConfig (opts) {
           __VERSION__: version
         }),
         buble()
+        // babel()
       ]
     },
     output: {
       file: opts.file,
       format: opts.format,
       banner,
-      name: camelize(name)
+      name: fmtModName(name)
     }
   }
 

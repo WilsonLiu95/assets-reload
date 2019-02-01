@@ -1,45 +1,23 @@
-# cdn-assets-switch
+# assets-reload
 
 ## intro
 
-switch all assets cdn domain(script,link,background-image,img).
-切换所有静态资源文件的 cdn 域名。包括 script,link,background-image,img
+前端资源重载，大流量的网站，就得考虑资源加载失败的情况下，用户白屏等问题。
 
-when you open one website in a test domain you can switch cdn name to location.hostname or any domain
-当你打开网站在一个测试域名，你可以将所有的 cdn 域名切换到当前域名或者任何域名
+因此必须对资源进行重载, 本模块通过 `script, link, img`等标签上的 `onerror`回调来进行资源加载重试，并且规则可定制。
+
+并且针对背景图也提供了替换方案。
 
 ## when use
 
-When you build front end assets in build tools like webpack. It will add cdn domain to assets.
-当你使用像 webpack 这样的构建工具构建前端资源，cdn 域名将会写死到资源中去。
-
-when you publish assets to test domain,It will load cdn-domain assets too(but cdn does not has assets). If you want to change cdn domain you can use this package.
-当你发布了资源到测试域名所在的环境，他仍然会加载 cdn 的域名资源(但是此时 cdn 上没有该资源).如果你想切换 cdn 域名，你可以使用本模块。
-
-I Recommend inline `index.js` to head. ！！！Only use in test environment.
-推荐内联 index.js 到 head.注意！！！只建议在测试域名使用。
-
 ```javascript
 try {
-  var isInTestDomain = location.hostname.indexOf("cdn.qq.com") > 0;
-  window.attackCatch = function(htmlNode) {
-    if (isInTestDomain) {
-      CdnAssetsSwitchObj.reset();
-    } else {
-      if (htmlNode.nodeName == "SCRIPT") {
-        CdnAssetsSwitchObj.replaceOneScript(htmlNode);
-      } else if (htmlNode.nodeName == "LINK") {
-        CdnAssetsSwitchObj.replaceOneLink(htmlNode);
-      }
-    }
-  };
-  var CdnAssetsSwitchObj = new window.CdnAssetsSwitch(function(
-    url,
-    type,
-    sourceEl
-  ) {
-    // 非cdn资源不重试
-    var isCdn = url && url.indexOf("cdn.qq.com");
+  var isInTestDomain = location.hostname.indexOf("www.qq.com") > 0;
+  // 资源重载自定义规则函数
+  var cdnHostname = "www-img.tenpay.com";
+  function assetsReloadFunc(url, type, sourceEl) {
+    // 线上静态资源都请求cdn 只对cdn资源进行重试
+    var isCdn = url && url.indexOf(cdnHostname) != -1;
     if (!isCdn) {
       return false;
     }
@@ -54,58 +32,50 @@ try {
         reloadTimes = Number(matchRes[1]);
       }
     }
-    // 第一次重试cdn域名资源
-    if (reloadTimes == 0) {
-      return url + (urlSearch ? "&" : "?") + "reloadAssets=1";
-    } else if (reloadTimes == 1) {
-      // 第二次则重试主站资源
-      var replaceUrl = url.replace("cdn.qq.com", location.hostname);
-      return replaceUrl.replace(
-        "reloadAssets=" + reloadTimes,
-        "reloadAssets=" + (1 + reloadTimes)
-      );
+    // 非测试环境 第一次重试cdn域名资源
+    var replaceUrl;
+    if (isInTestDomain && reloadTimes == 0) {
+      replaceUrl =
+        url.replace(cdnHostname, location.hostname) +
+        (urlSearch ? "&" : "?") +
+        "reloadAssets=1";
+      return replaceUrl;
     }
-  });
-  // hack webpack to modify publicUrl this can be exec immediately. this must exec before async load like import()  or require.ensure
-  if (isInTestDomain) {
-    CdnAssetsSwitchObj.hackWebpack();
-    CdnAssetsSwitchObj.reset();
+    if (!isInTestDomain) {
+      if (reloadTimes == 0) {
+        return url + (urlSearch ? "&" : "?") + "reloadAssets=1";
+      } else if (reloadTimes <= 1) {
+        // 此处阈值可以调整
+        replaceUrl = url.replace(cdnHostname, location.hostname);
+        return replaceUrl.replace(
+          "reloadAssets=" + reloadTimes,
+          "reloadAssets=" + (1 + reloadTimes)
+        );
+      }
+    }
   }
+  var assetsReloadItem = new AssetsReload(assetsReloadFunc);
+  if (isInTestDomain) {
+    assetsReloadItem.hackWebpack(function(webpackRequire){
+      // 替换webpack的静态资源 publicPath
+      webpackRequire.p = webpackRequire.p.replace(cdnHostname, location.hostname);
+    });
+    // 如果标签上都没有绑定  onerror 则可以直接进行全量替换重试，不过建议 写上 onerror 而非全量替换
+    assetsReloadItem.reloadAll("SCRIPT");
+    assetsReloadItem.reloadAll("LINK");
+    assetsReloadItem.reloadAll("IMG");
+    setTimeout(function(){
+      // 替换背景图
+      assetsReloadItem.reloadBackgroundImage();
+    },800)
+
+  }
+  // 全局绑定 attackCatch 函数
+  // 在 <script src="test.js" onerror="attackCatch(this)">
+  window.attackCatch = function(htmlNode) {
+    assetsReloadItem.reload(htmlNode);
+  };
 } catch (err) {
   console.error(err);
-}
-```
-
-## documents
-
-all function
-
-```javascript
-
-/**
- * @desc replaceFunc
-    1. return null undefined '' will not replace
-    2. return new url string
- *  @param url current url
-    @param type replaceType script,image,backgroundImage,link,webpack
-    @param sourceEl htmlNode or styleSheets.rules or __webpack_require__
- *  */
-function replaceFunc(url, type, sourceEl){
-
-}
-new CdnAssetsSwitch(replaceFunc);
-
-CdnAssetsSwitch.prototype = {
-    reset // reset all assets
-    // extend script and link attrs
-    extendAttr,
-    // replace asset url
-    relaceScriptSrc,
-    replaceLinkStyle,
-    replaceBackGroundImage,
-    relaceImgSrc,
-    // hack webpack PublicUrl
-    replaceWebpackPublicUrl, // plan one
-    hackWebpack // plan two
 }
 ```

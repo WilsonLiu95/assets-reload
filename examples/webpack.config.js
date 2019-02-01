@@ -52,7 +52,7 @@ module.exports = {
   resolve: {
     alias: {
       vue: 'vue/dist/vue.esm.js',
-      'vue-router': path.join(__dirname, '..', 'src')
+      'tfstorage': path.join(__dirname, '..', 'src')
     }
   },
 
