@@ -1,7 +1,7 @@
 export default class AssetsReload {
-  constructor(replaceFunc) {
+  constructor(replaceFunc, beforeInsertHook) {
     this.replaceFunc = replaceFunc
-
+    this.beforeInsertHook = beforeInsertHook || (() => {});
     this.reloadCache = {
       SCRIPT: [],
       IMG: [],
@@ -42,7 +42,7 @@ export default class AssetsReload {
     } = this.mapConf[nodeName];
     const link = domElement[linkKey]
 
-    const newUrl = this.replaceFunc(link, nodeName, domElement)
+    const newUrl = this.replaceFunc(link, domElement)
     if (!newUrl) {
       return false
     }
@@ -89,7 +89,7 @@ export default class AssetsReload {
             continue;
           }
           const nodeName = "BACKGROUNDIMAGE"
-          const newUrl = this.replaceFunc(backgroundImage, nodeName, item)
+          const newUrl = this.replaceFunc(backgroundImage, item)
 
           if (!newUrl) {
             continue
@@ -108,30 +108,6 @@ export default class AssetsReload {
         console.log("CdnAssetsSwitch replaceBackGroundImage", err)
       }
     }
-  }
-  /**
-   * @desc inline after runtime code,can replace publicUrl
-   *  */
-  hackWebpack(callback, webpackModuelId = 'AssetsReloadMod') {
-    // change webpack public path
-    const webpackModFunc = (
-      module,
-      exports,
-      webpackRequire
-    ) => {
-      callback && callback(webpackRequire)
-    }
-    // add to webpackJsonp array
-    window["webpackJsonp"] = window["webpackJsonp"] || []
-    window["webpackJsonp"].push([
-      [webpackModuelId],
-      {
-        [webpackModuelId]: webpackModFunc
-      },
-      [
-        [webpackModuelId]
-      ]
-    ])
   }
   /**
    * @desc entend origin node attributes

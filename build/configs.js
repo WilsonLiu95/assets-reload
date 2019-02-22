@@ -1,7 +1,7 @@
 const path = require('path')
 
 const buble = require('rollup-plugin-buble')
-const babel = require('rollup-plugin-babel')
+// const babel = require('rollup-plugin-babel')
 const cjs = require('rollup-plugin-commonjs')
 const node = require('rollup-plugin-node-resolve')
 const replace = require('rollup-plugin-replace')

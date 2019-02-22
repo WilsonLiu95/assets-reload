@@ -1,14 +1,14 @@
 /*!
-  * assets-reload v1.0.0
+  * assets-reload v1.1.0
   * (c) 2019 wilsonliuxyz@gmail.com
   * @description switch all assets cdn name (script,link,background-image,img). when you open one website in a test domain you can switch cdn name to location.hostname
   * @license MIT
   */
 'use strict';
 
-var AssetsReload = function AssetsReload(replaceFunc) {
+var AssetsReload = function AssetsReload(replaceFunc, beforeInsertHook) {
   this.replaceFunc = replaceFunc;
-
+  this.beforeInsertHook = beforeInsertHook || (function () {});
   this.reloadCache = {
     SCRIPT: [],
     IMG: [],
@@ -48,7 +48,7 @@ AssetsReload.prototype.reload = function reload (domElement) {
     var linkKey = ref.linkKey;
   var link = domElement[linkKey];
 
-  var newUrl = this.replaceFunc(link, nodeName, domElement);
+  var newUrl = this.replaceFunc(link, domElement);
   if (!newUrl) {
     return false
   }
@@ -95,7 +95,7 @@ AssetsReload.prototype.reloadBackgroundImage = function reloadBackgroundImage ()
           continue;
         }
         var nodeName = "BACKGROUNDIMAGE";
-        var newUrl = this.replaceFunc(backgroundImage, nodeName, item);
+        var newUrl = this.replaceFunc(backgroundImage, item);
 
         if (!newUrl) {
           continue
@@ -114,31 +114,6 @@ AssetsReload.prototype.reloadBackgroundImage = function reloadBackgroundImage ()
       console.log("CdnAssetsSwitch replaceBackGroundImage", err);
     }
   }
-};
-/**
- * @desc inline after runtime code,can replace publicUrl
- **/
-AssetsReload.prototype.hackWebpack = function hackWebpack (callback, webpackModuelId) {
-    var obj;
-
-    if ( webpackModuelId === void 0 ) webpackModuelId = 'AssetsReloadMod';
-  // change webpack public path
-  var webpackModFunc = function (
-    module,
-    exports,
-    webpackRequire
-  ) {
-    callback && callback(webpackRequire);
-  };
-  // add to webpackJsonp array
-  window["webpackJsonp"] = window["webpackJsonp"] || [];
-  window["webpackJsonp"].push([
-    [webpackModuelId],
-    ( obj = {}, obj[webpackModuelId] = webpackModFunc, obj),
-    [
-      [webpackModuelId]
-    ]
-  ]);
 };
 /**
  * @desc entend origin node attributes
