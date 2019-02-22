@@ -12,7 +12,7 @@ then
 
   # commit
   git add -A
-  git commit -m "[build] $VERSION"
+  git commit -m "build(release): $VERSION"
   npm version $VERSION --message "[release] $VERSION"
 
   # publish
